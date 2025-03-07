@@ -8,11 +8,20 @@ import {
   Globe,
   Package,
   Plane,
+  LogOut,
+  Settings,
+  MessageSquare
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import UseAuth from "../../hooks/useAuth";
 
 const Navbar = () => {
+  const { user, logOut } = UseAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleSignOut = () => {
+    logOut();
+  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
@@ -67,18 +76,58 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 rounded-full hover:bg-blue-700 transition-colors">
-                <Bell className="h-6 w-6" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-white transform translate-x-1 -translate-y-1"></span>
-              </button>
-
-              <Link
-                to="/signUpFLow"
-                className="flex items-center px-4 py-2 rounded-full bg-white text-blue-900 hover:bg-yellow-300 transition-colors"
-              >
-                <User className="h-5 w-5 mr-2" />
-                <span className="font-medium">Sign In</span>
-              </Link>
+              {user ? (
+                <>
+                  {/* Notification Button */}
+                  <button className="relative p-2 rounded-full hover:bg-blue-700 transition-colors">
+                    <Bell className="h-6 w-6" />
+                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-white transform translate-x-1 -translate-y-1"></span>
+                  </button>
+                  
+                  {/* Messages Button */}
+                  <button className="p-2 rounded-full hover:bg-blue-700 transition-colors">
+                    <MessageSquare className="h-6 w-6" />
+                  </button>
+                  
+                  {/* User Profile */}
+                  <div className="flex items-center gap-2">
+                    {user.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt="Profile" 
+                        className="h-10 w-10 rounded-full border-2 border-white object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-blue-700 flex items-center justify-center border-2 border-white">
+                        <User className="h-6 w-6" />
+                      </div>
+                    )}
+                    <span className="font-medium text-sm hidden md:block">{user.displayName || "User"}</span>
+                  </div>
+                  
+                  {/* Settings Button */}
+                  <Link to="/settings" className="p-2 rounded-full hover:bg-blue-700 transition-colors">
+                    <Settings className="h-6 w-6" />
+                  </Link>
+                  
+                  {/* Direct Logout Button */}
+                  <button 
+                    onClick={handleSignOut}
+                    className="flex items-center bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full transition-colors"
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/signUpFLow"
+                  className="flex items-center px-4 py-2 rounded-full bg-white text-blue-900 hover:bg-yellow-300 transition-colors"
+                >
+                  <User className="h-5 w-5 mr-2" />
+                  <span className="font-medium">Sign In</span>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -102,30 +151,68 @@ const Navbar = () => {
       {isOpen && (
         <div className="sm:hidden bg-blue-900">
           <div className="pt-2 pb-3 space-y-1">
-            <a className="flex items-center pl-3 pr-4 py-2 border-l-4 border-white text-base font-medium bg-blue-800">
+            <Link to="/findTravelers" className="flex items-center pl-3 pr-4 py-2 border-l-4 border-white text-base font-medium bg-blue-800">
               <Package className="w-5 h-5 mr-2" />
               Find Travelers
-            </a>
-            <a className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium hover:bg-blue-800 hover:border-blue-300">
+            </Link>
+            <Link to="/postTravelPlans" className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium hover:bg-blue-800 hover:border-blue-300">
               <Plane className="w-5 h-5 mr-2" />
               Post Travel Plans
-            </a>
-            <a className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium hover:bg-blue-800 hover:border-blue-300">
+            </Link>
+            <Link to="/howItWorks" className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium hover:bg-blue-800 hover:border-blue-300">
               How It Works
-            </a>
+            </Link>
           </div>
-          <div className="pt-4 pb-3 border-t border-blue-800">
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-blue-700 flex items-center justify-center">
-                  <User className="h-6 w-6" />
+          
+          {user ? (
+            <div className="pt-4 pb-3 border-t border-blue-800">
+              <div className="px-4 flex items-center">
+                <div className="flex-shrink-0">
+                  {user.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt="Profile" 
+                      className="h-10 w-10 rounded-full border-2 border-white object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-blue-700 flex items-center justify-center border-2 border-white">
+                      <User className="h-6 w-6" />
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <div className="text-base font-medium">{user.displayName || "User"}</div>
+                  <div className="text-sm text-blue-300">{user.email}</div>
                 </div>
               </div>
-              <button className="ml-3 px-4 py-2 rounded-full bg-white text-blue-900 hover:bg-yellow-300 transition-colors">
-                <span className="font-medium">Sign In</span>
-              </button>
+              <div className="mt-3 space-y-1 px-2">
+                <Link to="/profile" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800 hover:text-white">
+                  Your Profile
+                </Link>
+                <Link to="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800 hover:text-white">
+                  Dashboard
+                </Link>
+                <Link to="/settings" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800 hover:text-white">
+                  Settings
+                </Link>
+                <button 
+                  onClick={handleSignOut}
+                  className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium bg-red-700 text-white hover:bg-red-800"
+                >
+                  <LogOut className="h-5 w-5 mr-2" />
+                  Sign Out
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="pt-4 pb-3 border-t border-blue-800">
+              <div className="flex items-center justify-center">
+                <Link to="/signUpFLow" className="px-4 py-2 rounded-full bg-white text-blue-900 hover:bg-yellow-300 transition-colors">
+                  <span className="font-medium">Sign In</span>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </nav>
