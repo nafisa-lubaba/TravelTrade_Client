@@ -1,13 +1,17 @@
-import { createContext, useEffect, useState } from "react";
-import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "firebase/auth";
-import { app } from "../firebase/firebase.config";
-// import { toast } from "react-toastify";
+import {  createContext, useEffect, useState } from 'react';
+import { createUserWithEmailAndPassword, getAuth, 
+    GoogleAuthProvider, 
+    onAuthStateChanged, sendPasswordResetEmail, 
+    signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth';
 
+import { app } from '../firebase/firebase.config';
+import { toast } from 'react-toastify';
+
+
+// export const AuthContext = createContext(null)
 export const AuthContext = createContext(null)
 const auth = getAuth(app)
 const googleProvider = new GoogleAuthProvider();
-
 
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
@@ -30,20 +34,10 @@ const AuthProvider = ({ children }) => {
         return sendPasswordResetEmail(auth, email)
     }
     const logOut = async () => {
-        setLoading(true);
+        setLoading(true)
+        toast.success('Logout successfull')
         return signOut(auth)
-            .then(() => {
-                // toast.success("Logout successful");
-            })
-            .catch((error) => {
-                // toast.error(error.message);
-                console.log(error);
-                
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    };
+    }
     const updateUserProfile = (name, photo) => {
         return updateProfile(auth.currentUser, {
           displayName: name,
@@ -59,7 +53,11 @@ const AuthProvider = ({ children }) => {
           return unsubscribe()
         }
       }, [])
-      const authInfo = {
+
+    
+
+
+    const authInfo = {
         user,
         loading,
         setLoading,
@@ -72,10 +70,13 @@ const AuthProvider = ({ children }) => {
       }
     
 
+
+
     return (
+
         <AuthContext.Provider value={authInfo}>
-        {children}
-        </AuthContext.Provider>
+            {children}
+            </AuthContext.Provider>
     );
 };
 
