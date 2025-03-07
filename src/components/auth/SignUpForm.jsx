@@ -3,110 +3,147 @@ import {
   Mail,
   Lock,
   User,
-  MapPin,
   ArrowRight,
   Eye,
   EyeOff,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import UseAuth from "../../hooks/useAuth";
 
 const SignUpForm = ({ userType }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location?.state || "/";
+
+  // Assuming you have a UseAuth hook similar to the second component
+  // Import this at the top of your file with other imports
+  const { createUser, updateUserProfile, signInWithGoogle } = UseAuth();
+
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
-    location: "",
+    confirmPassword: "",
     userType: userType,
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [passwordValid, setPasswordValid] = useState(true);
+
+  const validatePassword = (password) => {
+    // Enforce a minimum of 8 characters
+    return password.length >= 8;
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    // Validate password length
+    if (e.target.name === "password") {
+      setPasswordValid(validatePassword(e.target.value));
+      setPasswordMatch(
+        e.target.value === formData.confirmPassword ||
+          formData.confirmPassword === ""
+      );
+    }
+
+    // Check if passwords match
+    if (e.target.name === "password" || e.target.name === "confirmPassword") {
+      if (e.target.name === "confirmPassword") {
+        setPasswordMatch(e.target.value === formData.password);
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you can handle the form submission
-    console.log("Form submitted:", formData);
+
+    // Validate before submission
+    if (!validatePassword(formData.password)) {
+      setPasswordValid(false);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordMatch(false);
+      return;
+    }
+
+    // Here we handle the form submission with Firebase
+    try {
+      setLoading(true);
+      // Create user with email and password
+      const result = await createUser(formData.email, formData.password);
+
+      // Update user profile with name
+      // Note: We don't have photoURL in our form, so only passing name
+      await updateUserProfile(formData.fullName, "");
+
+      console.log("User created:", result.user);
+
+      // Reset form
+      setFormData({
+        fullName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        userType: userType,
+      });
+
+      // Show success message
+      // toast.success("User created successfully");
+
+      // Navigate to the next page
+      navigate(from, { replace: true });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      // toast.error("Error creating user. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      const result = await signInWithGoogle();
+      console.log("Google Sign-In Success:", result.user);
+      // toast.success("Google Sign-Up Successful");
+      navigate("/");
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      // toast.error("Error signing in with Google");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
       <div className="bg-white rounded-2xl shadow-2xl flex flex-col items-center md:flex-row-reverse w-full max-w-4xl">
-        {/* Right Side - SVG Illustration */}
+        {/* Right Side - Lucide React Icons */}
         <div className="md:w-1/2 p-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-r-2xl text-white flex flex-col justify-center items-center">
-          <svg
-            viewBox="0 0 400 400"
-            className="w-full max-w-sm"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Background Patterns */}
-            <defs>
-              <pattern
-                id="grid"
-                width="40"
-                height="40"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 40 0 L 0 0 0 40"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="1"
-                  opacity="0.2"
-                />
-              </pattern>
-            </defs>
-            <rect width="400" height="400" fill="url(#grid)" />
+          <div className="w-64 h-64 relative mb-8">
+            <Shield className="w-64 h-64 text-white opacity-20 absolute" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Lock className="w-24 h-24 text-white" />
+            </div>
+            <div className="absolute top-1/4 left-1/4 animate-bounce-slow">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+            <div className="absolute bottom-1/4 right-1/4 animate-bounce-slow-delay">
+              <User className="w-12 h-12 text-white" />
+            </div>
+          </div>
 
-            {/* Central Elements */}
-            <circle
-              cx="200"
-              cy="200"
-              r="120"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeDasharray="8 8"
-              className="animate-spin-slow"
-            />
-
-            {/* Floating Elements */}
-            <g className="animate-float">
-              <rect
-                x="160"
-                y="140"
-                width="80"
-                height="80"
-                fill="#4B88EB"
-                opacity="0.2"
-              />
-              <rect x="170" y="150" width="60" height="60" fill="white" />
-              <path
-                d="M190 170 L210 190 M190 190 L210 170"
-                stroke="#4B88EB"
-                strokeWidth="4"
-              />
-            </g>
-
-            {/* Moving Dots */}
-            <circle
-              cx="120"
-              cy="120"
-              r="8"
-              fill="white"
-              className="animate-bounce-slow"
-            />
-            <circle
-              cx="280"
-              cy="280"
-              r="8"
-              fill="white"
-              className="animate-bounce-slow-delay"
-            />
-          </svg>
-
-          <h2 className="text-3xl font-bold mt-8 mb-4">Join Our Network!</h2>
+          <h2 className="text-3xl font-bold mt-4 mb-4">Join Our Network!</h2>
           <p className="text-center text-blue-100 mb-8">
             Connect with travelers worldwide and start your journey with
             TravelTrade today.
@@ -168,7 +205,11 @@ const SignUpForm = ({ userType }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="block w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all"
+                className={`block w-full pl-10 pr-12 py-3 border-2 ${
+                  !passwordValid && formData.password
+                    ? "border-red-300 focus:ring-red-500"
+                    : "border-gray-200 focus:ring-blue-500"
+                } rounded-xl focus:ring-2 focus:border-transparent bg-gray-50 transition-all`}
                 placeholder="Password"
                 required
               />
@@ -184,21 +225,48 @@ const SignUpForm = ({ userType }) => {
                 )}
               </button>
             </div>
+            {!passwordValid && formData.password && (
+              <div className="flex items-center text-red-500 text-sm">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                Password must be at least 8 characters long
+              </div>
+            )}
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MapPin className="h-5 w-5 text-blue-500" />
+                <Lock className="h-5 w-5 text-blue-500" />
               </div>
               <input
-                type="text"
-                name="location"
-                value={formData.location}
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 transition-all"
-                placeholder="Your Location"
+                className={`block w-full pl-10 pr-12 py-3 border-2 ${
+                  !passwordMatch && formData.confirmPassword
+                    ? "border-red-300 focus:ring-red-500"
+                    : "border-gray-200 focus:ring-blue-500"
+                } rounded-xl focus:ring-2 focus:border-transparent bg-gray-50 transition-all`}
+                placeholder="Confirm Password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                )}
+              </button>
             </div>
+            {!passwordMatch && formData.confirmPassword && (
+              <div className="flex items-center text-red-500 text-sm">
+                <XCircle className="h-4 w-4 mr-1" />
+                Passwords do not match
+              </div>
+            )}
 
             <div className="flex items-center mt-4">
               <input
@@ -220,10 +288,55 @@ const SignUpForm = ({ userType }) => {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl hover:from-blue-700 hover:to-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all hover:scale-105 mt-6"
+              disabled={loading}
+              className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl hover:from-blue-700 hover:to-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all hover:scale-105 mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {userType === "buyer" ? "Start Hiring" : "Join as Freelancer"}
-              <ArrowRight className="ml-2 h-5 w-5" />
+              {loading ? (
+                "Creating Account..."
+              ) : (
+                <>
+                  {userType === "buyer" ? "Start Hiring" : "Join as Freelancer"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Or sign up with
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 48 48">
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                ></path>
+                <path
+                  fill="#4285F4"
+                  d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                ></path>
+                <path
+                  fill="#FBBC05"
+                  d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                ></path>
+                <path
+                  fill="#34A853"
+                  d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                ></path>
+              </svg>
+              <span>Continue with Google</span>
             </button>
 
             <div className="text-center mt-6">
